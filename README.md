@@ -293,6 +293,29 @@ maigret --web 5000
 
 Open http://127.0.0.1:5000, enter a username, and view results.
 
+### JSON polling API
+
+`api_server.py` is a standalone Flask script (separate from `maigret --web`) that exposes a submit/poll JSON API for scripting or integrating Maigret into other tools. It's served via the [waitress](https://docs.pylonsproject.org/projects/waitress/) production WSGI server.
+
+```console
+source .venv/bin/activate
+python api_server.py
+
+```
+
+```bash
+# submit a search, get back a job_id
+curl -s -X POST http://127.0.0.1:5050/api/search \
+  -H 'Content-Type: application/json' \
+  -d '{"username": "test", "top_sites": 500, "timeout": 30}'
+# {"job_id": "...", "state": "running"}
+
+# poll for status/results
+curl -s http://127.0.0.1:5050/api/status/<job_id> | python3 -m json.tool
+```
+
+Once `state` is `"completed"`, the response includes a `results` list with one entry per site (`site_name`, `status`, `url`, `url_main`, `http_status`, `rank`, `tags`, `ids`, `keywords`). See [curl_api.sh](curl_api.sh) for a ready-made submit-and-poll example: `./curl_api.sh <username>`.
+
 ### Python library
 
 **Maigret can be embedded in your own Python projects.** The CLI is a thin wrapper around an async function you can call directly — build custom pipelines, feed results into your own tooling, or run it inside a larger OSINT workflow.
